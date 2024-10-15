@@ -39,7 +39,7 @@ type Bound struct {
 	args []string
 }
 
-// HandlerFunc defines a function that processes a [Bound] Command.
+// HandlerFunc defines a function that processes a [Bound] command.
 // It is used during parsing to delegate to subcommands.
 type HandlerFunc func(Bound)
 
