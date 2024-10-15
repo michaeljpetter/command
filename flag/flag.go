@@ -6,9 +6,6 @@ import (
 	"flag"
 )
 
-// CommandLine wraps [flag.CommandLine] as an extended [FlagSet].
-var CommandLine *FlagSet = &FlagSet{flag.CommandLine}
-
 // Aliases for the [flag.ErrorHandling] values.
 var (
 	ContinueOnError = flag.ContinueOnError

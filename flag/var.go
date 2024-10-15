@@ -20,18 +20,6 @@ func (f *FlagSet) Int(name string, value int, usage string, checks ...value.Chec
 	return p
 }
 
-// IntVar behaves as [flag.IntVar],
-// with an additional variadic parameter allowing checks to be applied to the parsed value.
-func IntVar(p *int, name string, value int, usage string, checks ...value.CheckFunc[int]) {
-	CommandLine.IntVar(p, name, value, usage, checks...)
-}
-
-// Int behaves as [flag.Int],
-// with an additional variadic parameter allowing checks to be applied to the parsed value.
-func Int(name string, value int, usage string, checks ...value.CheckFunc[int]) *int {
-	return CommandLine.Int(name, value, usage, checks...)
-}
-
 // StringVar behaves as [flag.FlagSet.StringVar],
 // with an additional variadic parameter allowing checks to be applied to the parsed value.
 func (f *FlagSet) StringVar(p *string, name string, value string, usage string, checks ...value.CheckFunc[string]) {
@@ -46,18 +34,6 @@ func (f *FlagSet) String(name string, value string, usage string, checks ...valu
 	return p
 }
 
-// StringVar behaves as [flag.StringVar],
-// with an additional variadic parameter allowing checks to be applied to the parsed value.
-func StringVar(p *string, name string, value string, usage string, checks ...value.CheckFunc[string]) {
-	CommandLine.StringVar(p, name, value, usage, checks...)
-}
-
-// String behaves as [flag.String],
-// with an additional variadic parameter allowing checks to be applied to the parsed value.
-func String(name string, value string, usage string, checks ...value.CheckFunc[string]) *string {
-	return CommandLine.String(name, value, usage, checks...)
-}
-
 // DurationVar behaves as [flag.FlagSet.DurationVar],
 // with an additional variadic parameter allowing checks to be applied to the parsed value.
 func (f *FlagSet) DurationVar(p *time.Duration, name string, value time.Duration, usage string, checks ...value.CheckFunc[time.Duration]) {
@@ -70,16 +46,4 @@ func (f *FlagSet) Duration(name string, value time.Duration, usage string, check
 	p := new(time.Duration)
 	f.DurationVar(p, name, value, usage, checks...)
 	return p
-}
-
-// DurationVar behaves as [flag.DurationVar],
-// with an additional variadic parameter allowing checks to be applied to the parsed value.
-func DurationVar(p *time.Duration, name string, value time.Duration, usage string, checks ...value.CheckFunc[time.Duration]) {
-	CommandLine.DurationVar(p, name, value, usage, checks...)
-}
-
-// Duration behaves as [flag.Duration],
-// with an additional variadic parameter allowing checks to be applied to the parsed value.
-func Duration(name string, value time.Duration, usage string, checks ...value.CheckFunc[time.Duration]) *time.Duration {
-	return CommandLine.Duration(name, value, usage, checks...)
 }
