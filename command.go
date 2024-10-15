@@ -1,5 +1,5 @@
 // Package command implements a command line parser that
-// extends the builtin flag package, adding support for
+// extends the stdlib flag package, adding support for
 // commands, subcommands, positional parameters, and checked values.
 package command
 
@@ -7,15 +7,12 @@ import (
 	"errors"
 	"fmt"
 	"github.com/michaeljpetter/command/flag"
-	"github.com/michaeljpetter/command/internal"
-	"github.com/michaeljpetter/command/value"
 	"github.com/michaeljpetter/fp"
 	"maps"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
-	"time"
 )
 
 // Command represents a single command in a command tree, which may
@@ -93,14 +90,14 @@ func (c *Command) Subcommand(name, usage string, handler HandlerFunc) {
 	c.subcommands[name] = subcommand{usage, handler}
 }
 
-// Positional defines a positional parameter with the given [Value], name, and usage.
+// PositionalVar defines a positional parameter with the given [Value], name, and usage.
 //
 // Panics if subcommands have been defined on the same command,
 // as they are mutually exclusive.
 //
 // Panics if the [Value] is required, and optional positional parameters
 // have already been defined on the same command.
-func (c *Command) Positional(value Value, name, usage string) {
+func (c *Command) PositionalVar(value Value, name, usage string) {
 	if c.HasSubcommands() {
 		panic("subcommands and positional parameters are mutually exclusive")
 	}
@@ -110,60 +107,6 @@ func (c *Command) Positional(value Value, name, usage string) {
 	}
 
 	c.positional = append(c.positional, &positional{name, usage, value, value.String()})
-}
-
-// PositionalIntVar defines a positional int parameter with the given name, default value, usage, and checks.
-// The pointer p defines the location to receive the parsed value.
-//
-// If value is nil, the parameter will have no default and will be treated as required.
-func (c *Command) PositionalIntVar(p *int, name string, value *int, usage string, checks ...value.CheckFunc[int]) {
-	c.Positional(internal.NewIntValue(value, p, checks...), name, usage)
-}
-
-// PositionalInt defines a positional int parameter with the given name, default value, usage, and checks.
-// The returned pointer receives the parsed value.
-//
-// If value is nil, the parameter will have no default and will be treated as required.
-func (c *Command) PositionalInt(name string, value *int, usage string, checks ...value.CheckFunc[int]) *int {
-	p := new(int)
-	c.PositionalIntVar(p, name, value, usage, checks...)
-	return p
-}
-
-// PositionalStringVar defines a positional string parameter with the given name, default value, usage, and checks.
-// The pointer p defines the location to receive the parsed value.
-//
-// If value is nil, the parameter will have no default and will be treated as required.
-func (c *Command) PositionalStringVar(p *string, name string, value *string, usage string, checks ...value.CheckFunc[string]) {
-	c.Positional(internal.NewStringValue(value, p, checks...), name, usage)
-}
-
-// PositionalString defines a positional string parameter with the given name, default value, usage, and checks.
-// The returned pointer receives the parsed value.
-//
-// If value is nil, the parameter will have no default and will be treated as required.
-func (c *Command) PositionalString(name string, value *string, usage string, checks ...value.CheckFunc[string]) *string {
-	p := new(string)
-	c.PositionalStringVar(p, name, value, usage, checks...)
-	return p
-}
-
-// PositionalDurationVar defines a positional [time.Duration] parameter with the given name, default value, usage, and checks.
-// The pointer p defines the location to receive the parsed value.
-//
-// If value is nil, the parameter will have no default and will be treated as required.
-func (c *Command) PositionalDurationVar(p *time.Duration, name string, value *time.Duration, usage string, checks ...value.CheckFunc[time.Duration]) {
-	c.Positional(internal.NewDurationValue(value, p, checks...), name, usage)
-}
-
-// PositionalDuration defines a positional [time.Duration] parameter with the given name, default value, usage, and checks.
-// The returned pointer receives the parsed value.
-//
-// If value is nil, the parameter will have no default and will be treated as required.
-func (c *Command) PositionalDuration(name string, value *time.Duration, usage string, checks ...value.CheckFunc[time.Duration]) *time.Duration {
-	p := new(time.Duration)
-	c.PositionalDurationVar(p, name, value, usage, checks...)
-	return p
 }
 
 // HasFlags indicates whether flags have been defined on this command.
@@ -260,7 +203,7 @@ func (c *Command) defaultUsage() {
 	}
 }
 
-// Parse parses the given arguments according to the definition of the command,
+// Parse parses the given arguments according to the definition of the command.
 // The behavior on error is defined by the [flag.ErrorHandling] value used to create the command.
 func (c *Command) Parse(args []string) error {
 	err := c.FlagSet.Parse(args)
