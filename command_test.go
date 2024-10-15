@@ -60,12 +60,14 @@ func TestCommandEmpty(t *testing.T) {
 }
 
 func TestCommandFlags(t *testing.T) {
+	var yr uint
 	var f int
 	var cab string
 
 	buildCommand := func() *command.Command {
-		f, cab = 0, ""
+		yr, f, cab = 0, 0, ""
 		cmd := command.New("trucker", "make a ford truck", flag.ContinueOnError)
+		cmd.UintVar(&yr, "yr", 2024, "model year", check.AtMost[uint](2024))
 		cmd.IntVar(&f, "f", 150, "model num", check.AtLeast(150))
 		cmd.StringVar(&cab, "cab", "", "cab feature", check.OneOf("extended", "super"))
 		return cmd
@@ -84,6 +86,8 @@ Options:
     	cab feature
   -f value
     	model num (default 150)
+  -yr value
+    	model year (default 2024)
 ` {
 			t.Errorf("wrong usage:\n%v", usageString(cmd))
 		}
@@ -101,10 +105,13 @@ Options:
 
 	t.Run("ValidArgs", func(t *testing.T) {
 		cmd := buildCommand()
-		err := cmd.Parse([]string{"-f", "250", "-cab", "super", "wut?"})
+		err := cmd.Parse([]string{"-f", "250", "-cab", "super", "-yr", "1989", "wut?"})
 
 		if err != nil {
 			t.Fatalf("parse failed with %v", err)
+		}
+		if yr != 1989 {
+			t.Errorf("wrong -yr value %v, expected %v", yr, 1989)
 		}
 		if f != 250 {
 			t.Errorf("wrong -f value %v, expected %v", f, 250)
@@ -123,6 +130,9 @@ Options:
 
 		if err != nil {
 			t.Fatalf("parse failed with %v", err)
+		}
+		if yr != 2024 {
+			t.Errorf("wrong -yr value %v, expected %v", yr, 2024)
 		}
 		if f != 150 {
 			t.Errorf("wrong -f value %v, expected %v", f, 150)
@@ -163,12 +173,14 @@ Options:
 }
 
 func TestCommandPositional(t *testing.T) {
+	var yr uint
 	var f int
 	var cab string
 
 	buildCommand := func() *command.Command {
-		f, cab = 0, ""
+		yr, f, cab = 0, 0, ""
 		cmd := command.New("trucker", "make a ford truck", flag.ContinueOnError)
+		cmd.PositionalUintVar(&yr, "yr", nil, "model year", check.AtMost[uint](2024))
 		cmd.PositionalIntVar(&f, "f", nil, "model num", check.AtLeast(150))
 		cmd.PositionalStringVar(&cab, "cab", ptr.To(""), "cab feature", check.OneOf("extended", "super"))
 		return cmd
@@ -178,11 +190,12 @@ func TestCommandPositional(t *testing.T) {
 		cmd := buildCommand()
 
 		if usageString(cmd) !=
-			`Usage: trucker <f> [cab]
+			`Usage: trucker <yr> <f> [cab]
 
   make a ford truck
 
 Arguments:
+  yr    model year
   f     model num
   cab   cab feature (default "")
 ` {
@@ -202,10 +215,13 @@ Arguments:
 
 	t.Run("ValidArgs", func(t *testing.T) {
 		cmd := buildCommand()
-		err := cmd.Parse([]string{"250", "super", "wut?"})
+		err := cmd.Parse([]string{"1976", "250", "super", "wut?"})
 
 		if err != nil {
 			t.Fatalf("parse failed with %v", err)
+		}
+		if yr != 1976 {
+			t.Errorf("wrong yr value %v, expected %v", yr, 1976)
 		}
 		if f != 250 {
 			t.Errorf("wrong f value %v, expected %v", f, 250)
@@ -220,10 +236,13 @@ Arguments:
 
 	t.Run("RequiredOnlyArgs", func(t *testing.T) {
 		cmd := buildCommand()
-		err := cmd.Parse([]string{"350"})
+		err := cmd.Parse([]string{"1998", "350"})
 
 		if err != nil {
 			t.Fatalf("parse failed with %v", err)
+		}
+		if yr != 1998 {
+			t.Errorf("wrong yr value %v, expected %v", yr, 1998)
 		}
 		if f != 350 {
 			t.Errorf("wrong -f value %v, expected %v", f, 350)
@@ -244,7 +263,7 @@ Arguments:
 		if err == nil {
 			t.Fatal("parse succeeded")
 		}
-		if err.Error() != `missing argument for <f>` {
+		if err.Error() != `missing argument for <yr>` {
 			t.Errorf("wrong error %v", err)
 		}
 	})
@@ -252,7 +271,7 @@ Arguments:
 	t.Run("ArgFailsParse", func(t *testing.T) {
 		cmd := buildCommand()
 		cmd.SetOutput(io.Discard)
-		err := cmd.Parse([]string{"ancy"})
+		err := cmd.Parse([]string{"2011", "ancy"})
 
 		if err == nil {
 			t.Fatal("parse succeeded")
@@ -265,7 +284,7 @@ Arguments:
 	t.Run("ArgFailsCheck", func(t *testing.T) {
 		cmd := buildCommand()
 		cmd.SetOutput(io.Discard)
-		err := cmd.Parse([]string{"50"})
+		err := cmd.Parse([]string{"2019", "50"})
 
 		if err == nil {
 			t.Fatal("parse succeeded")
@@ -379,7 +398,7 @@ func TestCommandAll(t *testing.T) {
 
 	cmd.Subcommand("design", "design a new truck", func(cmd command.Bound) {
 		calledHandler = true
-		budget := cmd.Int("budget", 50000, "design budget")
+		budget := cmd.Float64("budget", 59.99, "design budget")
 		model := cmd.PositionalString("model", nil, "truck model")
 
 		if usageString(cmd.Command) !=
@@ -389,7 +408,7 @@ func TestCommandAll(t *testing.T) {
 
 Options:
   -budget value
-    	design budget (default 50000)
+    	design budget (default 59.99)
 
 Arguments:
   model  truck model
@@ -409,8 +428,8 @@ Arguments:
 		if *model != "Silverado" {
 			t.Errorf("wrong model %v, expected %v", *model, "Silverado")
 		}
-		if *budget != 45000 {
-			t.Errorf("wrong budget %v, expected %v", *budget, 45000)
+		if *budget != 45.75 {
+			t.Errorf("wrong budget %v, expected %v", *budget, 45.75)
 		}
 	})
 
@@ -434,7 +453,7 @@ Commands:
 		t.Errorf("wrong usage:\n%v", usageString(cmd))
 	}
 
-	err := cmd.Parse([]string{"-make", "CHEVY", "design", "-budget", "45000", "Silverado"})
+	err := cmd.Parse([]string{"-make", "CHEVY", "design", "-budget", "45.75", "Silverado"})
 
 	if err != nil {
 		t.Fatalf("parse failed with %v", err)
